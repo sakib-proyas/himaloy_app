@@ -23,10 +23,13 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
-      - name: Build Flutter iOS Assets
-        run: flutter build ios --release --config-only
+      - name: Setup iOS Pods
+        run: |
+          cd ios
+          pod install || true
+          cd ..
 
-      - name: Build Unsigned Xcode App Bundle
+      - name: Build Unsigned iOS App for Physical Device
         run: |
           xcodebuild -workspace ios/Runner.xcworkspace \
             -scheme Runner \
@@ -35,13 +38,20 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
+            EXPANDED_CODE_SIGN_IDENTITY="" \
             PROVISIONING_PROFILE_SPECIFIER="" \
             clean build
 
       - name: Package Unsigned IPA
         run: |
           mkdir -p build/ios/iphoneos/Payload
-          cp -r build/ios/iphoneos/Release-iphoneos/Runner.app build/ios/iphoneos/Payload/
+          if [ -d "build/ios/iphoneos/Release-iphoneos/Runner.app" ]; then
+            cp -r build/ios/iphoneos/Release-iphoneos/Runner.app build/ios/iphoneos/Payload/
+          elif [ -d "build/ios/outputs/Release-iphoneos/Runner.app" ]; then
+            cp -r build/ios/outputs/Release-iphoneos/Runner.app build/ios/iphoneos/Payload/
+          else
+            find ios -name "Runner.app" -exec cp -r {} build/ios/iphoneos/Payload/ \;
+          fi
           cd build/ios/iphoneos
           zip -r Himaloy_Agro_Care.ipa Payload
 
