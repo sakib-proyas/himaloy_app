@@ -8,17 +8,11 @@ on:
 jobs:
   build-ios:
     name: Build iOS App on macOS Runner
-    runs-on: macos-latest
+    runs-on: macos-14
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -29,18 +23,31 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
-      - name: Build iOS App (No Code Signing)
-        run: flutter build ios --release --no-codesign
-
-      - name: Create Payload ZIP for iOS Installation
+      - name: Install Pods
         run: |
-          cd build/ios/iphoneos
-          mkdir -p Payload
-          cp -r Runner.app Payload/
-          zip -r Himaloy_Agro_Care.ipa Payload
+          cd ios
+          pod install || true
+          cd ..
+
+      - name: Build iOS App (No Code Signing)
+        run: flutter build ios --release --no-codesign || flutter build ipa --release --no-codesign
+
+      - name: Package IPA
+        run: |
+          if [ -d "build/ios/iphoneos/Runner.app" ]; then
+            mkdir -p build/ios/iphoneos/Payload
+            cp -r build/ios/iphoneos/Runner.app build/ios/iphoneos/Payload/
+            cd build/ios/iphoneos
+            zip -r Himaloy_Agro_Care.ipa Payload
+          elif [ -f "build/ios/ipa/*.ipa" ]; then
+            cp build/ios/ipa/*.ipa build/ios/iphoneos/Himaloy_Agro_Care.ipa
+          fi
 
       - name: Upload iOS App Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Himaloy_Agro_Care_iOS_IPA
-          path: build/ios/iphoneos/Himaloy_Agro_Care.ipa
+          path: |
+            build/ios/iphoneos/Himaloy_Agro_Care.ipa
+            build/ios/ipa/*.ipa
+          if-no-files-found: ignore
