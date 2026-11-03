@@ -27,32 +27,21 @@ jobs:
       - name: Setup iOS Pods
         run: |
           cd ios
-          pod install || true
+          pod install --repo-update || true
           cd ..
 
       - name: Build Unsigned iOS App for Physical Device
-        run: |
-          xcodebuild -workspace ios/Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            -sdk iphoneos \
-            CONFIGURATION_BUILD_DIR=${{ github.workspace }}/build/ios/iphoneos \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            EXPANDED_CODE_SIGN_IDENTITY="" \
-            PROVISIONING_PROFILE_SPECIFIER="" \
-            clean build
+        run: flutter build ios --release --no-codesign
 
       - name: Package Unsigned IPA
         run: |
-          mkdir -p ${{ github.workspace }}/build/ios/ipa/Payload
-          cp -r ${{ github.workspace }}/build/ios/iphoneos/Runner.app ${{ github.workspace }}/build/ios/ipa/Payload/
-          cd ${{ github.workspace }}/build/ios/ipa
+          mkdir -p build/ios/ipa/Payload
+          find build/ios -name "Runner.app" -type d -exec cp -r {} build/ios/ipa/Payload/ \;
+          cd build/ios/ipa
           zip -r Himaloy_Agro_Care.ipa Payload
 
       - name: Upload iOS App Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Himaloy_Agro_Care_iOS_IPA
-          path: ${{ github.workspace }}/build/ios/ipa/Himaloy_Agro_Care.ipa
+          path: build/ios/ipa/Himaloy_Agro_Care.ipa
