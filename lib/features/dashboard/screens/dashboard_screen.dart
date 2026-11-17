@@ -418,14 +418,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           'Sales order ledger',
                           Icons.receipt_long_outlined,
                           Colors.blue.shade700,
-                          () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderListScreen(isSalesLedger: true))),
+                          () => Navigator.push(context, MaterialPageRoute(builder: (_) => OrderListScreen(isSalesLedger: true, currentUser: widget.currentUser))),
                         ),
                         _buildNavTile(
                           'Wholesale Sales',
                           'Bulk & trade sales',
                           Icons.store_outlined,
                           Colors.indigo.shade800,
-                          () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderListScreen(isSalesLedger: true, filterCategory: 'wholesale'))),
+                          () => Navigator.push(context, MaterialPageRoute(builder: (_) => OrderListScreen(isSalesLedger: true, filterCategory: 'wholesale', currentUser: widget.currentUser))),
                         ),
                         _buildNavTile(
                           'Returns',
@@ -505,7 +505,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             'Field orders log',
                             Icons.receipt_outlined,
                             Colors.blue.shade700,
-                            () => Navigator.push(context, MaterialPageRoute(builder: (_) => OrderListScreen(canApprove: canApprove))),
+                            () => Navigator.push(context, MaterialPageRoute(builder: (_) => OrderListScreen(canApprove: canApprove, isSalesLedger: false, currentUser: widget.currentUser))),
                           ),
                         if (_canAccess('employeeordersdelivery') || _canAccess('employeeorders'))
                           _buildNavTile(
@@ -584,7 +584,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             'Financial overview',
                             Icons.pie_chart_outline,
                             Colors.blue.shade800,
-                            () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportsScreen(initialReportType: 'summary'))),
+                            () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReportsScreen(initialReportType: 'summary', currentUser: widget.currentUser))),
                           ),
                         if (_canAccess('reportproducttransfer'))
                           _buildNavTile(
@@ -592,7 +592,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             'Stock movements',
                             Icons.swap_horiz_outlined,
                             Colors.orange.shade800,
-                            () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportsScreen(initialReportType: 'product_transfer'))),
+                            () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReportsScreen(initialReportType: 'product_transfer', currentUser: widget.currentUser))),
                           ),
                         if (_canAccess('reportstockvaluation') || _canAccess('reports'))
                           _buildNavTile(
@@ -600,7 +600,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             'Account statements',
                             Icons.menu_book_outlined,
                             Colors.indigo.shade800,
-                            () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportsScreen(initialReportType: 'customer_ledger'))),
+                            () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReportsScreen(initialReportType: 'customer_ledger', currentUser: widget.currentUser))),
                           ),
                         if (_canAccess('reportfactorystock'))
                           _buildNavTile(
@@ -640,15 +640,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             'Item sales chart',
                             Icons.bar_chart_outlined,
                             Colors.deepOrange.shade800,
-                            () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportsScreen(initialReportType: 'product_wise_sale'))),
+                            () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReportsScreen(initialReportType: 'product_wise_sale', currentUser: widget.currentUser))),
                           ),
                         if (_canAccess('reportemployeesalecollection'))
                           _buildNavTile(
                             'Employee Sales',
                             'Collections by staff',
                             Icons.people_outline,
-                            Colors.purple.shade800,
-                            () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportsScreen(initialReportType: 'employee_sale_collection'))),
+                            Colors.purple.shade700,
+                            () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReportsScreen(initialReportType: 'employee_sale_collection', currentUser: widget.currentUser))),
                           ),
                         if (_canAccess('reportemployeeproductwisesale'))
                           _buildNavTile(
@@ -656,7 +656,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             'Products by staff',
                             Icons.shopping_bag_outlined,
                             Colors.lightBlue.shade800,
-                            () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportsScreen(initialReportType: 'employee_product_wise_sale'))),
+                            () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReportsScreen(initialReportType: 'employee_product_wise_sale', currentUser: widget.currentUser))),
                           ),
                         if (_canAccess('reportcustomerduecollectionbyemployee'))
                           _buildNavTile(
@@ -664,7 +664,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             'Collections per staff',
                             Icons.monetization_on_outlined,
                             Colors.teal.shade900,
-                            () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportsScreen(initialReportType: 'customer_due_collection_by_employee'))),
+                            () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReportsScreen(initialReportType: 'customer_due_collection_by_employee', currentUser: widget.currentUser))),
                           ),
                         if (_canAccess('activity'))
                           _buildNavTile(

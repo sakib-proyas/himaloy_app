@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../auth/models/user_model.dart';
 import 'order_detail_screen.dart';
 import 'create_order_screen.dart';
 
@@ -9,12 +10,14 @@ class OrderListScreen extends StatefulWidget {
   final bool canApprove;
   final bool isSalesLedger;
   final String? filterCategory; // 'wholesale' or null
+  final UserModel? currentUser;
 
   const OrderListScreen({
     super.key,
     this.canApprove = false,
     this.isSalesLedger = true,
     this.filterCategory,
+    this.currentUser,
   });
 
   @override
@@ -66,8 +69,50 @@ class _OrderListScreenState extends State<OrderListScreen> with SingleTickerProv
       if (res.data['success'] == true) {
         final data = res.data['data'];
         final List list = data is List ? data : (data['data'] ?? []);
+
+        // Client-side fallback filtering by officer assigned customers for non-admin staff
+        List<dynamic> items = list;
+        final user = widget.currentUser;
+        if (user != null && !user.isAdmin && user.role.toLowerCase() != 'admin' && user.role.toLowerCase() != 'superadmin') {
+          final empName = (user.employee?.name ?? user.name).toLowerCase();
+          final empId = user.employee?.id;
+
+          // Fetch officer assigned customer IDs to filter
+          try {
+            final custRes = await _apiClient.get(ApiConstants.customers);
+            if (custRes.data['success'] == true) {
+              final List rawCustList = custRes.data['data']['data'] ?? [];
+              final assignedCustIds = <int>{};
+              final assignedCustNames = <String>{};
+
+              for (final c in rawCustList) {
+                final officerId = c['officer_id'];
+                final officerStr = (c['officer'] ?? '').toString().toLowerCase();
+                if ((empId != null && officerId == empId) ||
+                    (officerStr.isNotEmpty && (officerStr.contains(empName) || empName.contains(officerStr)))) {
+                  if (c['id'] != null) assignedCustIds.add(c['id']);
+                  if (c['name'] != null) assignedCustNames.add((c['name'] ?? '').toString().toLowerCase());
+                }
+              }
+
+              items = items.where((s) {
+                final custId = s['customer_id'] ?? s['customer']?['id'];
+                final custName = (s['customer_name'] ?? s['customer']?['name'] ?? '').toString().toLowerCase();
+                final officerId = s['officer_id'] ?? s['employee_id'];
+                final officerStr = (s['officer'] ?? s['employee_name'] ?? '').toString().toLowerCase();
+
+                if (custId != null && assignedCustIds.contains(custId)) return true;
+                if (custName.isNotEmpty && assignedCustNames.contains(custName)) return true;
+                if (empId != null && officerId == empId) return true;
+                if (officerStr.isNotEmpty && (officerStr.contains(empName) || empName.contains(officerStr))) return true;
+                return false;
+              }).toList();
+            }
+          } catch (_) {}
+        }
+
         setState(() {
-          _sales = list;
+          _sales = items;
         });
       }
     } catch (e) {
@@ -138,8 +183,8 @@ class _OrderListScreenState extends State<OrderListScreen> with SingleTickerProv
                   ? Center(
                       child: Text(
                         widget.filterCategory == 'wholesale'
-                            ? 'No wholesale sales ledger records found.'
-                            : 'No sales records found.',
+                            ? 'No wholesale sales records found for your assigned customers.'
+                            : 'No sales records found for your assigned customers.',
                       ),
                     )
                   : RefreshIndicator(

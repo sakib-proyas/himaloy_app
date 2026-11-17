@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../auth/models/user_model.dart';
 
 class ReportsScreen extends StatefulWidget {
   final String? initialReportType;
+  final UserModel? currentUser;
 
-  const ReportsScreen({super.key, this.initialReportType});
+  const ReportsScreen({super.key, this.initialReportType, this.currentUser});
 
   @override
   State<ReportsScreen> createState() => _ReportsScreenState();
@@ -107,8 +110,49 @@ class _ReportsScreenState extends State<ReportsScreen> {
     try {
       final res = await _apiClient.get(config['endpoint']);
       if (res.data['success'] == true) {
+        dynamic data = res.data['data'];
+
+        // Fallback filter for Customer Ledger for non-admin officers
+        final user = widget.currentUser;
+        if (key == 'customer_ledger' && data is List && user != null && !user.isAdmin && user.role.toLowerCase() != 'admin' && user.role.toLowerCase() != 'superadmin') {
+          final empName = (user.employee?.name ?? user.name).toLowerCase();
+          final empId = user.employee?.id;
+
+          try {
+            final custRes = await _apiClient.get(ApiConstants.customers);
+            if (custRes.data['success'] == true) {
+              final List rawCustList = custRes.data['data']['data'] ?? [];
+              final assignedCustIds = <int>{};
+              final assignedCustNames = <String>{};
+
+              for (final c in rawCustList) {
+                final officerId = c['officer_id'];
+                final officerStr = (c['officer'] ?? '').toString().toLowerCase();
+                if ((empId != null && officerId == empId) ||
+                    (officerStr.isNotEmpty && (officerStr.contains(empName) || empName.contains(officerStr)))) {
+                  if (c['id'] != null) assignedCustIds.add(c['id']);
+                  if (c['name'] != null) assignedCustNames.add((c['name'] ?? '').toString().toLowerCase());
+                }
+              }
+
+              data = data.where((item) {
+                final cid = item['id'] ?? item['customer_id'];
+                final cname = (item['name'] ?? item['customer_name'] ?? '').toString().toLowerCase();
+                final officerId = item['officer_id'];
+                final officerStr = (item['officer'] ?? '').toString().toLowerCase();
+
+                if (cid != null && assignedCustIds.contains(cid)) return true;
+                if (cname.isNotEmpty && assignedCustNames.contains(cname)) return true;
+                if (empId != null && officerId == empId) return true;
+                if (officerStr.isNotEmpty && (officerStr.contains(empName) || empName.contains(officerStr))) return true;
+                return false;
+              }).toList();
+            }
+          } catch (_) {}
+        }
+
         setState(() {
-          _reportData = res.data['data'];
+          _reportData = data;
         });
       }
     } catch (_) {
