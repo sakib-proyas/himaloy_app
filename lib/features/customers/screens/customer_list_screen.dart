@@ -2,17 +2,20 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../auth/models/user_model.dart';
 import '../models/customer_model.dart';
 import 'customer_detail_screen.dart';
 
 class CustomerListScreen extends StatefulWidget {
   final bool initialOnlyDue;
   final bool initialOnlyWholesale;
+  final UserModel? currentUser;
 
   const CustomerListScreen({
     super.key,
     this.initialOnlyDue = false,
     this.initialOnlyWholesale = false,
+    this.currentUser,
   });
 
   @override
@@ -50,6 +53,22 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
         final List list = response.data['data']['data'] ?? [];
         setState(() {
           var items = list.map((item) => CustomerModel.fromJson(item)).toList();
+
+          // Client-side fallback filtering by assigned officer for field staff
+          final user = widget.currentUser;
+          if (user != null && !user.isAdmin && user.role.toLowerCase() != 'admin' && user.role.toLowerCase() != 'superadmin') {
+            final empId = user.employee?.id;
+            final empName = user.employee?.name ?? user.name;
+            items = items.where((c) {
+              if (empId != null && c.officerId == empId) return true;
+              if (c.officer != null && c.officer!.isNotEmpty) {
+                return c.officer!.toLowerCase().contains(empName.toLowerCase()) ||
+                    empName.toLowerCase().contains(c.officer!.toLowerCase());
+              }
+              return false;
+            }).toList();
+          }
+
           if (_onlyDue) {
             items = items.where((c) => c.totalDue > 0).toList();
           }
@@ -129,6 +148,8 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                           'address': addressCtrl.text.trim(),
                           'territory': territoryCtrl.text.trim(),
                           'customer_category': isWholesale ? 'wholesale customer' : 'retail customer',
+                          if (widget.currentUser?.employee?.id != null)
+                            'officer_id': widget.currentUser!.employee!.id,
                         },
                       );
                       _fetchCustomers();
@@ -200,7 +221,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _customers.isEmpty
-                    ? const Center(child: Text('No customers found.'))
+                    ? const Center(child: Text('No customers found for your assigned officer profile.'))
                     : RefreshIndicator(
                         onRefresh: () => _fetchCustomers(_searchController.text),
                         child: ListView.separated(
@@ -253,6 +274,8 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                                     const SizedBox(height: 4),
                                     Text('Proprietor: ${customer.proprietorName ?? "N/A"} • 📞 ${customer.phone}'),
                                     Text('Territory: ${customer.territory ?? "General"} • ${customer.address ?? ""}'),
+                                    if (customer.officer != null && customer.officer!.isNotEmpty)
+                                      Text('Officer: ${customer.officer}', style: const TextStyle(fontSize: 11, color: Colors.blue)),
                                   ],
                                 ),
                                 trailing: Column(
@@ -287,4 +310,3 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
     );
   }
 }
-

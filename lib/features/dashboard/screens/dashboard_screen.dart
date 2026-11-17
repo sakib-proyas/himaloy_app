@@ -439,14 +439,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           'Customer directory',
                           Icons.people_alt_outlined,
                           Colors.blueGrey.shade800,
-                          () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerListScreen(initialOnlyWholesale: false))),
+                          () => Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerListScreen(initialOnlyWholesale: false, currentUser: widget.currentUser))),
                         ),
                         _buildNavTile(
                           'Wholesale Customers',
                           'Wholesale directory',
                           Icons.storefront_outlined,
                           Colors.green.shade800,
-                          () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerListScreen(initialOnlyWholesale: true))),
+                          () => Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerListScreen(initialOnlyWholesale: true, currentUser: widget.currentUser))),
                         ),
                         _buildNavTile(
                           'Due Collection',
@@ -467,7 +467,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           'Due customer list',
                           Icons.monetization_on_outlined,
                           Colors.teal.shade800,
-                          () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerListScreen(initialOnlyDue: true))),
+                          () => Navigator.push(context, MaterialPageRoute(builder: (_) => CustomerListScreen(initialOnlyDue: true, currentUser: widget.currentUser))),
                         ),
                         _buildNavTile(
                           'Employee Collection',

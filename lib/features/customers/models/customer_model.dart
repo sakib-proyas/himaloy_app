@@ -9,13 +9,15 @@ class CustomerModel {
   final String? address;
   final String? region;
   final String? territory;
+  final String? officer;
+  final int? officerId;
   final double totalDue;
   final bool isWholesale;
 
   CustomerModel({
     required this.id,
-    this.customerId,
     required this.name,
+    this.customerId,
     this.proprietorName,
     this.customerCategory,
     required this.phone,
@@ -23,6 +25,8 @@ class CustomerModel {
     this.address,
     this.region,
     this.territory,
+    this.officer,
+    this.officerId,
     required this.totalDue,
     required this.isWholesale,
   });
@@ -30,8 +34,8 @@ class CustomerModel {
   factory CustomerModel.fromJson(Map<String, dynamic> json) {
     return CustomerModel(
       id: json['id'] ?? 0,
-      customerId: json['customer_id'],
       name: json['name'] ?? '',
+      customerId: json['customer_id'],
       proprietorName: json['proprietor_name'],
       customerCategory: json['customer_category'],
       phone: json['phone'] ?? '',
@@ -39,9 +43,10 @@ class CustomerModel {
       address: json['address'],
       region: json['region'],
       territory: json['territory'],
+      officer: json['officer'],
+      officerId: json['officer_id'] != null ? int.tryParse(json['officer_id'].toString()) : null,
       totalDue: double.tryParse(json['total_due']?.toString() ?? '0') ?? 0.0,
       isWholesale: json['is_wholesale'] ?? false,
     );
   }
 }
-
